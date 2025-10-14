@@ -27,21 +27,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-FRONTEND_URL = 'http://localhost:3000'
-BACKEND_URL = 'http://localhost:8000'
-
-# Application definition
-
-# settings.py
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "apikey"  # This is literal string 'apikey'
-EMAIL_HOST_PASSWORD = "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"  # Replace with your SendGrid API Key
-DEFAULT_FROM_EMAIL = "amitvikram2341@gmail.com"  # Must be verified in SendGrid
-FRONTEND_URL = "http://localhost:3000"  # Or your frontend URL
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
