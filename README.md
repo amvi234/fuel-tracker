@@ -13,7 +13,6 @@ git clone https://github.com/amvi234/fuel-tracker.git
  ```
 
 
-
 ## 🛠️ Tech Stack
 
 This project uses the following technologies:
