@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+  :root {
+    --background: #11686b;
+    --foreground: #171717;
+  }
+  @layer utilities {
+    .bg-gray-100 {
+      background-color: rgb(2, 39, 2);
+    }
+  }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  min-height: 100vh;
+  margin: 0;
+}
