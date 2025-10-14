@@ -5,6 +5,15 @@ A full stack web solution to
 - log each fill-up from a receipt (station name, fuel brand/grade, total paid, liters), record odometer (mileage).
 - view history plus statistics (e.g., cost per liter, consumption, distance per liter, cost per km/mi, rolling averages, per-brand comparisons).
 
+## Simple Commands to run this project:-
+
+```bash
+git clone https://github.com/amvi234/fuel-tracker.git
+&& docker compose up
+ ```
+
+
+
 ## 🛠️ Tech Stack
 
 This project uses the following technologies:
@@ -26,14 +35,6 @@ This project uses the following technologies:
 - Node.js 20+
 - Docker
 
-### Simple Commands to run this project:-
-
-```bash
-git clone
- ```
- ```bash
-docker compose up
- ```
 
 
 ## Setup to run this project:-
