@@ -7,18 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../../../providers';
 
-// Constants.
-const PRODUCT_CATEGORIES: CategoryOption[] = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'stationary', label: 'Stationary' },
-    { value: 'electronics', label: 'Electronics' },
-    { value: 'clothing', label: 'Clothing' },
-    { value: 'books', label: 'Books' },
-    { value: 'home', label: 'Home & Garden' },
-    { value: 'sports', label: 'Sports' },
-    { value: 'other', label: 'Other' }
-];
-
 const formatCurrency = (value: string | number): string => `$${parseFloat(String(value) || '0').toFixed(2)}`;
 const formatNumber = (value: number): string => new Intl.NumberFormat().format(value || 0);
 
@@ -28,7 +16,6 @@ const Product: React.FC = () => {
     // States.
     const [showDemandForecastModal, setShowDemandForecastModal] = useState<boolean>(false);
     const [selectedProductsForForecast, setSelectedProductsForForecast] = useState<string[]>([]);
-    const [globalDemandForecastEnabled, setGlobalDemandForecastEnabled] = useState<boolean>(false);
     const [products, setProducts] = useState<any>([]);
     const [showAddModal, setShowAddModal] = useState<boolean>(false);
     const [showEditModal, setShowEditModal] = useState<boolean>(false);
@@ -43,14 +30,12 @@ const Product: React.FC = () => {
 
     const [formData, setFormData] = useState<FormData>({
         name: '',
-        category: 'stationary',
-        cost_price: '',
-        selling_price: '',
-        description: '',
-        stock_available: '',
-        units_sold: '',
-        demand_forecast: '',
-        optimized_price: '',
+        odometer: '',
+        station_name: '',
+        fuel_brand: '',
+        fuel_grade: '',
+        quantity: '',
+        total_amount: '',
     });
 
     const [errors, setErrors] = useState<Partial<FormData>>({});
@@ -72,7 +57,6 @@ const Product: React.FC = () => {
         search: debouncedSearchTerm
     });
 
-    const [demandForecastEnabled, setDemandForecastEnabled] = useState<boolean>(false);
     const createProductMutation = useCreateProduct();
     const updateProductMutation = useUpdateProduct();
     const deleteProductMutation = useDeleteProduct();
@@ -81,6 +65,8 @@ const Product: React.FC = () => {
     // useEffects.
     useEffect(() => {
         if (successProductData && productsResponse) {
+            console.log(productsResponse);
+
             setProducts(productsResponse);
         }
     }, [successProductData, errorProductData, productsResponse])
@@ -95,20 +81,20 @@ const Product: React.FC = () => {
         const newErrors: Partial<FormData> = {};
 
         if (!formData.name.trim()) newErrors.name = 'Product name is required';
-        if (!formData.cost_price || parseFloat(formData.cost_price) <= 0) {
-            newErrors.cost_price = 'Valid cost price is required';
+        if (!formData.odometer || parseFloat(formData.odometer) <= 0) {
+            newErrors.odometer = 'Valid odometer reading is required';
         }
-        if (!formData.selling_price || parseFloat(formData.selling_price) <= 0) {
-            newErrors.selling_price = 'Valid selling price is required';
+        if (!formData.station_name || parseFloat(formData.station_name) <= 0) {
+            newErrors.station_name = 'Valid selling price is required';
         }
-        if (parseFloat(formData.selling_price) <= parseFloat(formData.cost_price)) {
-            newErrors.selling_price = 'Selling price must be greater than cost price';
+        if (parseFloat(formData.fuel_brand) <= parseFloat(formData.fuel_brand)) {
+            newErrors.fuel_brand = 'Fuel brand must be greater than cost price';
         }
-        if (formData.stock_available && parseInt(formData.stock_available) < 0) {
-            newErrors.stock_available = 'Stock cannot be negative';
+        if (formData.fuel_grade && parseInt(formData.fuel_grade) < 0) {
+            newErrors.fuel_grade = 'Fuel grade cannot be negative';
         }
-        if (formData.units_sold && parseInt(formData.units_sold) < 0) {
-            newErrors.units_sold = 'Units sold cannot be negative';
+        if (formData.total_amount && parseInt(formData.total_amount) < 0) {
+            newErrors.total_amount = 'total_amount cannot be negative';
         }
 
         setErrors(newErrors);
@@ -118,17 +104,14 @@ const Product: React.FC = () => {
     const resetForm = () => {
         setFormData({
             name: '',
-            category: 'stationary',
-            cost_price: '',
-            selling_price: '',
-            description: '',
-            stock_available: '',
-            units_sold: '',
-            demand_forecast: '',
-            optimized_price: ''
+            odometer: '',
+            station_name: '',
+            fuel_brand: '',
+            fuel_grade: '',
+            quantity: '',
+            total_amount: '',
         });
         setErrors({});
-        setDemandForecastEnabled(false);
     };
 
 
@@ -138,34 +121,18 @@ const Product: React.FC = () => {
         try {
             let productData: any = {
                 name: formData.name,
-                category: formData.category,
-                cost_price: formData.cost_price,
-                selling_price: formData.selling_price,
-                description: formData.description,
-                stock_available: parseInt(formData.stock_available) || 0,
-                units_sold: parseInt(formData.units_sold) || 0,
+                odometer: formData.odometer,
+                station_name: formData.station_name,
+                fuel_brand: formData.fuel_brand,
+                fuel_grade: formData.fuel_grade,
+                quantity: parseInt(formData.quantity) || 0,
+                total_amount: parseInt(formData.total_amount) || 0,
             };
-
-            // Calculate demand forecast and optimized price if enabled
-            if (demandForecastEnabled) {
-                const calculations = calculateDemandForecastAndOptimizedPrice(
-                    parseInt(formData.stock_available) || 0,
-                    parseInt(formData.units_sold) || 0,
-                    parseFloat(formData.selling_price)
-                );
-
-                productData.demand_forecast = calculations.demandForecast;
-                productData.optimized_price = calculations.optimizedPrice.toFixed(2);
-            } else {
-                productData.demand_forecast = formData.demand_forecast ? parseInt(formData.demand_forecast) : null;
-                productData.optimized_price = null;
-            }
 
             await createProductMutation.mutateAsync(productData);
 
             setShowAddModal(false);
             resetForm();
-            setDemandForecastEnabled(false);
             showNotification('Product added successfully!');
         } catch (error) {
             showNotification('Failed to add product', 'error');
@@ -201,35 +168,19 @@ const Product: React.FC = () => {
             let productData: any = {
                 id: selectedProduct.id,
                 name: formData.name,
-                category: formData.category,
-                cost_price: formData.cost_price,
-                selling_price: formData.selling_price,
-                description: formData.description,
-                stock_available: parseInt(formData.stock_available) || 0,
-                units_sold: parseInt(formData.units_sold) || 0,
+                odometer: formData.odometer,
+                station_name: formData.station_name,
+                fuel_brand: formData.fuel_brand,
+                description: formData.fuel_grade,
+                quantity: parseInt(formData.quantity) || 0,
+                total_amount: parseInt(formData.total_amount) || 0,
             };
-
-            // Calculate demand forecast and optimized price if enabled.
-            if (demandForecastEnabled) {
-                const calculations = calculateDemandForecastAndOptimizedPrice(
-                    parseInt(formData.stock_available) || 0,
-                    parseInt(formData.units_sold) || 0,
-                    parseFloat(formData.selling_price)
-                );
-
-                productData.demand_forecast = calculations.demandForecast;
-                productData.optimized_price = calculations.optimizedPrice.toFixed(2);
-            } else {
-                productData.demand_forecast = formData.demand_forecast ? parseInt(formData.demand_forecast) : null;
-                productData.optimized_price = null;
-            }
 
             await updateProductMutation.mutateAsync(productData);
 
             setShowEditModal(false);
             resetForm();
             setSelectedProduct(null);
-            setDemandForecastEnabled(false);
             showNotification('Product updated successfully!');
         } catch (error) {
             showNotification('Failed to update product', 'error');
@@ -256,45 +207,14 @@ const Product: React.FC = () => {
         setSelectedProduct(product);
         setFormData({
             name: product.name,
-            category: product.category,
-            cost_price: product.cost_price,
-            selling_price: product.selling_price,
-            description: product.description || '',
-            stock_available: product.stock_available.toString(),
-            units_sold: product.units_sold.toString(),
-            demand_forecast: product.demand_forecast?.toString() || '',
-            optimized_price: product.optimized_price?.toString() || ''
+            odometer: product.odometer,
+            station_name: product.station_name,
+            fuel_brand: product.fuel_brand,
+            fuel_grade: product.fuel_grade || '',
+            quantity: product.quantity.toString(),
+            total_amount: product.total_amount?.toString() || ''
         });
-        setDemandForecastEnabled(!!product.demand_forecast && !!product.optimized_price);
         setShowEditModal(true);
-    };
-
-
-    const calculateProfitMargin = (costPrice: string, sellingPrice: string): number => {
-        const cost = parseFloat(costPrice);
-        const selling = parseFloat(sellingPrice);
-        if (cost <= 0) return 0;
-        return ((selling - cost) / cost) * 100;
-    };
-
-    const calculateDemandForecastAndOptimizedPrice = (
-        stockAvailable: number,
-        unitsSold: number,
-        sellingPrice: number
-    ) => {
-        // Simple demand forecast algorithm
-        const demandForecast = Math.ceil(unitsSold * 1.2 + stockAvailable * 0.1);
-
-        // Simple Fuel Tracker algorithm
-        const demandRatio = unitsSold / (stockAvailable + 1);
-        const optimizedPrice = demandRatio > 0.8
-            ? sellingPrice * 1.05
-            : sellingPrice * 0.95;
-
-        return {
-            demandForecast,
-            optimizedPrice: Math.max(optimizedPrice, sellingPrice * 0.8)
-        };
     };
 
     const renderFormField = (
@@ -352,11 +272,9 @@ const Product: React.FC = () => {
 
     const chartData = products.filter((item: Product) => selectedProductsForForecast.includes(item.id)).map((item: Product) => ({
         name: item.name,
-        demand: item.demand_forecast ? item.demand_forecast : Math.ceil(item.units_sold * 1.2 + item.stock_available * 1.0),
-        price: item.selling_price,
     }));
 
-      const toggleDropdown = () => setShowDropdown(prev => !prev);
+    const toggleDropdown = () => setShowDropdown(prev => !prev);
 
     return (
         <div className="min-h-screen bg-gray-900 text-white">
@@ -387,68 +305,42 @@ const Product: React.FC = () => {
                 </div>
             </div>
             {showDropdown && (
-            <div ref={dropdownRef}
-              className="absolute right-0 top-12 shadow-lg rounded-lg py-2 w-20 border border-gray-200 z-50">
-              <button
-                onClick={() => {
-                  setShowDropdown(false);
-                    handleLogout();
-                }}
-                className="color-red w-full px-2 py-2 hover:bg-red-500 cursor-pointer"
-              >
-                Logout
-              </button>
-            </div>
-          )}
+                <div ref={dropdownRef}
+                    className="absolute right-0 top-12 shadow-lg rounded-lg py-2 w-20 border border-gray-200 z-50">
+                    <button
+                        onClick={() => {
+                            setShowDropdown(false);
+                            handleLogout();
+                        }}
+                        className="color-red w-full px-2 py-2 hover:bg-red-500 cursor-pointer"
+                    >
+                        Logout
+                    </button>
+                </div>
+            )}
             {/* Sub Header */}
             <div className="bg-black px-6 py-3 border-t border-gray-700">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center space-x-4">
-                        <h2 className="text-xl font-semibold">Create and Manage Product</h2>
+                        <h2 className="text-xl font-semibold">Create and Manage Vehicles</h2>
                     </div>
 
                     <div className="flex items-center space-x-4">
                         {/* Demand Forecast Toggle */}
-                        <div className="flex items-center space-x-3 px-3 py-2 rounded-md bg-black">
-                            <button
-                                type="button"
-                                onClick={() => setGlobalDemandForecastEnabled(!globalDemandForecastEnabled)}
-                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${globalDemandForecastEnabled ? 'bg-teal-500' : 'bg-gray-600'
-                                    }`}
-                            >
-                                <span
-                                    className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${globalDemandForecastEnabled ? 'translate-x-5' : 'translate-x-1'
-                                        }`}
-                                />
-                            </button>
-                            <div className="flex items-center space-x-2">
-                                <span className="text-sm text-white">With Demand Forecast</span>
-                            </div>
 
-                        </div>
 
                         {/* Search */}
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 " />
                             <input
                                 type="text"
-                                placeholder="Search products..."
+                                placeholder="Search vehicles..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="bg-black text-white pl-10 pr-4 py-2 rounded-md border border-teal-600 focus:outline-none transition-colors w-64"
                             />
                         </div>
 
-                        {/* Category Filter */}
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="bg-black text-white px-3 py-2 rounded-md border  border-teal-600 focus:outline-none transition-colors"
-                        >
-                            {PRODUCT_CATEGORIES.map(cat => (
-                                <option key={cat.value} value={cat.value}>{cat.label}</option>
-                            ))}
-                        </select>
 
                         {/* Filter Button */}
                         <button className="border border-teal-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 transition-colors">
@@ -459,13 +351,12 @@ const Product: React.FC = () => {
                         {/* Add New Products Button */}
                         <button
                             onClick={() => {
-                                setDemandForecastEnabled(globalDemandForecastEnabled);
                                 setShowAddModal(true);
                             }}
                             className="bg-teal-400 hover:bg-teal-500 text-black px-4 py-2 rounded-md flex items-center space-x-2 transition-colors font-medium"
                         >
                             <Plus className="w-4 h-4" />
-                            <span>Add New Products</span>
+                            <span>Add New Vehicles</span>
                         </button>
 
                         {/* Demand Forecast Button */}
@@ -474,7 +365,7 @@ const Product: React.FC = () => {
                             className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 transition-colors font-medium"
                         >
                             <span className="text-black hover:text-blue-300 transition-colors">📊</span>
-                            <span>Demand Forecast</span>
+                            <span>Statistics</span>
                         </button>
 
                     </div>
@@ -507,14 +398,13 @@ const Product: React.FC = () => {
                                                 className="rounded bg-gray-700 text-white border border-gray-600 checked:bg-teal-400 checked:border-teal-500"
                                             />
                                         </th>
-                                        <th className="text-left p-4 font-medium">Product Name</th>
-                                        <th className="text-left p-4 font-medium">Category</th>
-                                        <th className="text-left p-4 font-medium">Cost Price</th>
-                                        <th className="text-left p-4 font-medium">Selling Price</th>
-                                        <th className="text-left p-4 font-medium">Description</th>
-                                        <th className="text-left p-4 font-medium">Stock</th>
-                                        <th className="text-left p-4 font-medium">Units Sold</th>
-                                        <th className="text-left p-4 font-medium">Calculated Demand Forecast</th>
+                                        <th className="text-left p-4 font-medium">name</th>
+                                        <th className="text-left p-4 font-medium">odometer reading</th>
+                                        <th className="text-left p-4 font-medium">station name</th>
+                                        <th className="text-left p-4 font-medium">fuel brand</th>
+                                        <th className="text-left p-4 font-medium">quantity</th>
+                                        <th className="text-left p-4 font-medium">total amount</th>
+                                        <th className="text-left p-4 font-medium">fuel grade</th>
                                         <th className="text-left p-4 font-medium">Actions</th>
                                     </tr>
                                 </thead>
@@ -523,8 +413,8 @@ const Product: React.FC = () => {
                                         <tr>
                                             <td colSpan={9} className="text-center p-8 text-gray-400">
                                                 {searchTerm || selectedCategory !== 'all' ?
-                                                    'No products match your search criteria.' :
-                                                    'No products found. Add your first product to get started.'}
+                                                    'No vehicles match your search criteria.' :
+                                                    'No vehicles found. Add your first vehicle to get started.'}
                                             </td>
                                         </tr>
                                     ) : (
@@ -539,20 +429,14 @@ const Product: React.FC = () => {
                                                     />
                                                 </td>
                                                 <td className="p-4 text-gray-800 border-r border-gray-800 font-medium">{product.name}</td>
-                                                <td className="p-4 text-gray-800 border-r border-gray-800 capitalize">{product.category}</td>
-                                                <td className="p-4 text-gray-800 border-r border-gray-800">{formatCurrency(product.cost_price)}</td>
-                                                <td className="p-4 text-gray-800 border-r border-gray-800">{formatCurrency(product.selling_price)}</td>
+                                                <td className="p-4 text-gray-800 border-r border-gray-800 capitalize">{product.odometer}</td>
+                                                <td className="p-4 text-gray-800 border-r border-gray-800">{(product.station_name)}</td>
+                                                <td className="p-4 text-gray-800 border-r border-gray-800">{(product.fuel_brand)}</td>
+                                                <td className="p-4 text-gray-800 border-r border-gray-800">{(product.quantity)}</td>
+                                                <td className="p-4 text-gray-800 border-r border-gray-800">{(product.fuel_grade)}</td>
+                                                <td className="p-4 text-gray-800 border-r border-gray-800">{formatCurrency(product.total_amount)}</td>
 
-                                                <td className="p-4 max-w-xs border-r border-gray-800">
-                                                    <div className="truncate text-gray-800 " title={product.description}>
-                                                        {product.description || 'No description'}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 text-gray-800 border-r border-gray-800">{formatNumber(product.stock_available)}</td>
-                                                <td className="p-4 text-gray-800 border-r border-gray-800">{formatNumber(product.units_sold)}</td>
-                                                <td className="p-4 text-green-800 border-r border-gray-800">
-                                                    {product.demand_forecast ? formatCurrency(product.demand_forecast) : '-'}
-                                                </td>
+                                               
                                                 <td className="p-4">
                                                     <div className="flex space-x-2">
                                                         <button
@@ -625,64 +509,60 @@ const Product: React.FC = () => {
                             {/* Chart Container */}
                             <div className="bg-black rounded-lg p-4 mb-6 max-h-[90vh]" style={{ height: "400px" }}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={chartData} margin={{top: 20, right: 30, left: 20, bottom: 5}}>
+                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                                            <XAxis dataKey="name" stroke="#9CA3AF" />
-                                            <YAxis stroke="#9CA3AF" />
-                                            <Tooltip />
-                                            <Legend />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="demand"
-                                                stroke="#A855F7"
-                                                strokeWidth={3}
-                                                dot={{ r: 4 }}
-                                                name="Product Demand"
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="price"
-                                                stroke="#14B8A6"
-                                                strokeWidth={3}
-                                                dot={{ r: 4 }}
-                                                name="Selling Price"
-                                            />
+                                        <XAxis dataKey="name" stroke="#9CA3AF" />
+                                        <YAxis stroke="#9CA3AF" />
+                                        <Tooltip />
+                                        <Legend />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="demand"
+                                            stroke="#A855F7"
+                                            strokeWidth={3}
+                                            dot={{ r: 4 }}
+                                            name="Product Demand"
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="price"
+                                            stroke="#14B8A6"
+                                            strokeWidth={3}
+                                            dot={{ r: 4 }}
+                                            name="Selling Price"
+                                        />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
                             {/* Data Table */}
                             <div className="bg-gray-800 rounded-lg">
-                                <table className="w-full">
-                                    <thead className="bg-gray-700">
+                                <table className="min-w-full bg-white">
+                                    <thead>
                                         <tr>
-                                            <th className="text-left p-4 font-medium">Product Name</th>
-                                            <th className="text-left p-4 font-medium">Product Category</th>
-                                            <th className="text-left p-4 font-medium">Cost Price</th>
-                                            <th className="text-left p-4 font-medium">Selling Price</th>
-                                            <th className="text-left p-4 font-medium">Available Stock</th>
-                                            <th className="text-left p-4 font-medium">Units Sold</th>
-                                            <th className="text-left p-4 font-medium">Calculated Demand Forecast</th>
+                                            <th className="p-4">Name</th>
+                                            <th className="p-4">Odometer</th>
+                                            <th className="p-4">Station Name</th>
+                                            <th className="p-4">Fuel Brand</th>
+                                            <th className="p-4">Quantity</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {products
-                                            .filter((product: { id: string; }) => selectedProductsForForecast.includes(product.id))
-                                            .map((product: { id: React.Key | null | undefined; name: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; category: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; cost_price: string | number; selling_price: string | number; stock_available: number; units_sold: number; demand_forecast: number; }, index: number) => (
+                                            .map((product: any, index: any) => (
                                                 <tr key={product.id} className={`${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750'}`}>
                                                     <td className="p-4 font-medium">{product.name}</td>
-                                                    <td className="p-4 capitalize">{product.category}</td>
-                                                    <td className="p-4">{formatCurrency(product.cost_price)}</td>
-                                                    <td className="p-4">{formatCurrency(product.selling_price)}</td>
-                                                    <td className="p-4">{formatNumber(product.stock_available)}</td>
-                                                    <td className="p-4">{formatNumber(product.units_sold)}</td>
-                                                    <td className="p-4 text-teal-400 font-semibold">
-                                                        {product.demand_forecast ? formatNumber(product.demand_forecast) :
-                                                            formatNumber(Math.ceil(product.units_sold * 1.2 + product.stock_available * 0.1))}
-                                                    </td>
+                                                    <td className="p-4 capitalize">{product.odometer}</td>
+                                                    <td className="p-4">{product.station_name}</td>
+                                                    <td className="p-4">{product.fuel_brand}</td>
+                                                    <td className="p-4">{product.fuel_grade}</td>
+                                                    <td className="p-4">{product.quantity}</td>
+                                                    <td className="p-4">{product.fuel_grade}</td>
+                                                    <td className="p-4">{product.total_amount}</td>
                                                 </tr>
                                             ))}
                                     </tbody>
                                 </table>
+
                             </div>
                         </div>
                     </div>
@@ -694,7 +574,7 @@ const Product: React.FC = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-semibold">Add New Product</h3>
+                            <h3 className="text-xl font-semibold">Add New Fuel Up</h3>
                             <button
                                 onClick={() => {
                                     setShowAddModal(false);
@@ -707,19 +587,14 @@ const Product: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {renderFormField('Product Name', 'name', 'text', 'Enter product name', true)}
-                            {renderFormField('Category', 'category', 'select', '', true, PRODUCT_CATEGORIES.slice(1))}
-                            {renderFormField('Cost Price', 'cost_price', 'number', '0.00', true)}
-                            {renderFormField('Selling Price', 'selling_price', 'number', '0.00', true)}
+                            {renderFormField('Name', 'name', 'text', 'Enter name', true)}
+                            {renderFormField('Odometer', 'odometer', 'text', '0.00', true,)}
+                            {renderFormField('station name', 'station_name', 'text', '', true)}
+                            {renderFormField('Fuel brand', 'fuel_brand', 'text', '', true)}
+                            {renderFormField('Fuel grade', 'fuel_grade', 'text', '', true)}
+                            {renderFormField('quantity', 'quantity', 'number', '0.00')}
+                            {renderFormField('Total Amount', 'total_amount', 'number', '0')}
                         </div>
-                        <div className="mt-6 mb-6">
-                            {renderFormField('Description', 'description', 'textarea', 'Enter product description')}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {renderFormField('Stock Available', 'stock_available', 'number', '0')}
-                            {renderFormField('Units Sold', 'units_sold', 'number', '0')}
-                        </div>
-
                         <div className="flex justify-end space-x-4 mt-8">
                             <button
                                 onClick={() => {
@@ -735,7 +610,7 @@ const Product: React.FC = () => {
                                 disabled={createProductMutation.isPending}
                                 className="px-6 py-2 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-700 disabled:cursor-not-allowed text-white rounded-md transition-colors"
                             >
-                                {createProductMutation.isPending ? 'Adding...' : 'Add Product'}
+                                {createProductMutation.isPending ? 'Adding...' : 'Add Vehicle'}
                             </button>
                         </div>
                     </div>
@@ -762,16 +637,13 @@ const Product: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {renderFormField('Product Name', 'name', 'text', 'Enter product name', true)}
-                            {renderFormField('Category', 'category', 'select', '', true, PRODUCT_CATEGORIES.slice(1))}
-                            {renderFormField('Cost Price', 'cost_price', 'number', '0.00', true)}
-                            {renderFormField('Selling Price', 'selling_price', 'number', '0.00', true)}
-                            {renderFormField('Stock Available', 'stock_available', 'number', '0')}
-                            {renderFormField('Units Sold', 'units_sold', 'number', '0')}
-                            {renderFormField('Demand Forecast', 'demand_forecast', 'number', '0')}
+                            {renderFormField('Odometer', 'odometer', 'text', '0.00', true,)}
+                            {renderFormField('station name', 'station_name', 'number', '0.00', true)}
+                            {renderFormField('Fuel brand', 'fuel_brand', 'number', '0.00', true)}
                         </div>
 
                         <div className="mt-6">
-                            {renderFormField('Description', 'description', 'textarea', 'Enter product description')}
+                            {renderFormField('Quantity', 'quantity', 'textarea', 'Enter product description')}
                         </div>
 
                         <div className="flex justify-end space-x-4 mt-8">
@@ -791,99 +663,6 @@ const Product: React.FC = () => {
                                 className="px-6 py-2 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-700 disabled:cursor-not-allowed text-white rounded-md transition-colors"
                             >
                                 {updateProductMutation.isPending ? 'Updating...' : 'Update Product'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* View Product Modal */}
-            {showViewModal && selectedProduct && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-semibold">Product Details</h3>
-                            <button
-                                onClick={() => {
-                                    setShowViewModal(false);
-                                    setSelectedProduct(null);
-                                }}
-                                className="text-gray-400 hover:text-white transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Product Name</label>
-                                    <p className="text-white">{selectedProduct.name}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Category</label>
-                                    <p className="text-white capitalize">{selectedProduct.category}</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Cost Price</label>
-                                    <p className="text-green-400 font-semibold">{formatCurrency(selectedProduct.cost_price)}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Selling Price</label>
-                                    <p className="text-blue-400 font-semibold">{formatCurrency(selectedProduct.selling_price)}</p>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Optimized Price</label>
-                                <p className="text-purple-400 font-semibold">
-                                    {selectedProduct.optimized_price ? formatCurrency(selectedProduct.optimized_price) : '-'}
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Stock Available</label>
-                                    <p className="text-white">{formatNumber(selectedProduct.stock_available)}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Units Sold</label>
-                                    <p className="text-white">{formatNumber(selectedProduct.units_sold)}</p>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Calculated Demand Forecast</label>
-                                {selectedProduct.demand_forecast ? formatCurrency(selectedProduct.demand_forecast) : '-'}
-                            </div>
-
-
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Profit Margin</label>
-                                <p className="text-purple-400 font-semibold">
-                                    {calculateProfitMargin(selectedProduct.cost_price, selectedProduct.selling_price).toFixed(1)}%
-                                </p>
-                            </div>
-
-                            {selectedProduct.description && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Description</label>
-                                    <p className="text-white">{selectedProduct.description}</p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex justify-end mt-8">
-                            <button
-                                onClick={() => {
-                                    setShowViewModal(false);
-                                    setSelectedProduct(null);
-                                }}
-                                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
-                            >
-                                Close
                             </button>
                         </div>
                     </div>
