@@ -477,8 +477,8 @@ const Product: React.FC = () => {
                                         <th className="text-left p-4 font-medium">station name</th>
                                         <th className="text-left p-4 font-medium">fuel brand</th>
                                         <th className="text-left p-4 font-medium">quantity</th>
-                                        <th className="text-left p-4 font-medium">total amount</th>
                                         <th className="text-left p-4 font-medium">fuel grade</th>
+                                        <th className="text-left p-4 font-medium">total amount</th>
                                         <th className="text-left p-4 font-medium">Actions</th>
                                     </tr>
                                 </thead>
