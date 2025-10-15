@@ -9,7 +9,7 @@ A full stack web solution to
 
 ```bash
 git clone https://github.com/amvi234/fuel-tracker.git
-&& docker compose up
+&& docker compose up --build
  ```
 
 

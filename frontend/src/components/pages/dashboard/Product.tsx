@@ -4,11 +4,85 @@ import { localStorageManager } from '../../../lib/utils';
 import type { Product, FormData, Notification, CategoryOption } from './types';
 import { useCreateProduct, useDeleteProduct, useListProducts, useUpdateProduct } from '../../../shared/api/product/product-api';
 import { useNavigate } from 'react-router-dom';
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../../../providers';
 
 const formatCurrency = (value: string | number): string => `$${parseFloat(String(value) || '0').toFixed(2)}`;
-const formatNumber = (value: number): string => new Intl.NumberFormat().format(value || 0);
+
+const DummyDataForecastModal = ({ showModal, setShowModal, products }: any) => {
+    console.log(products,'noo')
+    const getMetrics = (product: any) => {
+        const quantity = parseFloat(product.quantity) || 1;
+        const totalAmount = parseFloat(product.total_amount) || 0;
+
+        const distance = 400;
+        const costPerLiter = totalAmount / quantity;
+        const consumption = quantity / distance;
+        const distancePerLiter = distance / quantity;
+        const costPerKm = costPerLiter * consumption;
+        console.log(products, 'amit');
+        
+        return {
+            costPerLiter: isFinite(costPerLiter) ? costPerLiter : 0,
+            consumption: isFinite(consumption) ? consumption : 0,
+            distancePerLiter: isFinite(distancePerLiter) ? distancePerLiter : 0,
+            costPerKm: isFinite(costPerKm) ? costPerKm : 0,
+            rollingAverage: isFinite(costPerLiter) ? (costPerLiter + 20) / 2 : 0
+        };
+
+    };
+    return (
+        showModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-gray-800 rounded-lg w-full max-w-6xl p-6">
+                    <div className="flex justify-between items-center border-b border-gray-700 mb-4">
+                        <h3 className="text-xl font-semibold">Fuel Consumption Forecast</h3>
+                        <button
+                            onClick={() => setShowModal(false)}
+                            className="text-gray-400 hover:text-white transition-colors"
+                        >
+                            X
+                        </button>
+                    </div>
+                    <table className="min-w-full text-left bg-white text-gray-900">
+                        <thead>
+                            <tr>
+                                <th className="p-4">Brand</th>
+                                <th className="p-4">Cost per Liter</th>
+                                <th className="p-4">Consumption (liters/km)</th>
+                                <th className="p-4">Distance per Liter (km)</th>
+                                <th className="p-4">Cost per Km</th>
+                                <th className="p-4">Rolling Average</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products && products.length > 0 ? (
+                                products.map((product: any) => {
+                                    const metrics = getMetrics(product);
+                                    return (
+                                        <tr key={product.id} className="border-b border-gray-200">
+                                            <td className="p-4">{product.fuel_brand}</td>
+                                            <td className="p-4">{metrics.costPerLiter.toFixed(2)}</td>
+                                            <td className="p-4">{metrics.consumption.toFixed(2)}</td>
+                                            <td className="p-4">{metrics.distancePerLiter.toFixed(2)}</td>
+                                            <td className="p-4">{metrics.costPerKm.toFixed(2)}</td>
+                                            <td className="p-4">{metrics.rollingAverage.toFixed(2)}</td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={6} className="p-8 text-center text-gray-500">
+                                        No products selected for forecast
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        )
+    );
+};
 
 // Component.
 const Product: React.FC = () => {
@@ -436,7 +510,7 @@ const Product: React.FC = () => {
                                                 <td className="p-4 text-gray-800 border-r border-gray-800">{(product.fuel_grade)}</td>
                                                 <td className="p-4 text-gray-800 border-r border-gray-800">{formatCurrency(product.total_amount)}</td>
 
-                                               
+
                                                 <td className="p-4">
                                                     <div className="flex space-x-2">
                                                         <button
@@ -492,82 +566,11 @@ const Product: React.FC = () => {
                 )}
             </div>
 
-            {showDemandForecastModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-gray-800 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-scroll">
-                        <div className="flex justify-between items-center p-6 border-b border-gray-700">
-                            <h3 className="text-xl font-semibold">Demand Forecast</h3>
-                            <button
-                                onClick={() => setShowDemandForecastModal(false)}
-                                className="text-gray-400 hover:text-white transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <div className="p-6">
-                            {/* Chart Container */}
-                            <div className="bg-black rounded-lg p-4 mb-6 max-h-[90vh]" style={{ height: "400px" }}>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                                        <XAxis dataKey="name" stroke="#9CA3AF" />
-                                        <YAxis stroke="#9CA3AF" />
-                                        <Tooltip />
-                                        <Legend />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="demand"
-                                            stroke="#A855F7"
-                                            strokeWidth={3}
-                                            dot={{ r: 4 }}
-                                            name="Product Demand"
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="price"
-                                            stroke="#14B8A6"
-                                            strokeWidth={3}
-                                            dot={{ r: 4 }}
-                                            name="Selling Price"
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                            {/* Data Table */}
-                            <div className="bg-gray-800 rounded-lg">
-                                <table className="min-w-full bg-white">
-                                    <thead>
-                                        <tr>
-                                            <th className="p-4">Name</th>
-                                            <th className="p-4">Odometer</th>
-                                            <th className="p-4">Station Name</th>
-                                            <th className="p-4">Fuel Brand</th>
-                                            <th className="p-4">Quantity</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {products
-                                            .map((product: any, index: any) => (
-                                                <tr key={product.id} className={`${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750'}`}>
-                                                    <td className="p-4 font-medium">{product.name}</td>
-                                                    <td className="p-4 capitalize">{product.odometer}</td>
-                                                    <td className="p-4">{product.station_name}</td>
-                                                    <td className="p-4">{product.fuel_brand}</td>
-                                                    <td className="p-4">{product.fuel_grade}</td>
-                                                    <td className="p-4">{product.quantity}</td>
-                                                    <td className="p-4">{product.fuel_grade}</td>
-                                                    <td className="p-4">{product.total_amount}</td>
-                                                </tr>
-                                            ))}
-                                    </tbody>
-                                </table>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <DummyDataForecastModal
+                showModal={showDemandForecastModal}
+                setShowModal={setShowDemandForecastModal}
+                products={products.filter((p: Product) => selectedProductsForForecast.includes(p.id))}
+            />
 
             {/* Add Product Modal */}
             {showAddModal && (
