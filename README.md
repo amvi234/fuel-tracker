@@ -34,7 +34,14 @@ This project uses the following technologies:
 - Node.js 20+
 - Docker
 
+### Screenshots
 
+<img width="959" height="472" alt="image" src="https://github.com/user-attachments/assets/bc019ee0-a165-4fab-b7aa-76769bda6bc7" />
+<img width="958" height="471" alt="image" src="https://github.com/user-attachments/assets/2d84c694-aa19-46fa-a280-a78d604ec166" />
+<img width="959" height="475" alt="image" src="https://github.com/user-attachments/assets/c13c3ab6-f8f8-47a8-b92f-828b1a11ce14" />
+<img width="959" height="473" alt="image" src="https://github.com/user-attachments/assets/df7b2bee-6934-4640-9b7b-5bd60de61bc5" />
+<img width="955" height="479" alt="image" src="https://github.com/user-attachments/assets/dd8627ce-cda9-4153-a216-5b25ba3472d5" />
+<img width="959" height="473" alt="image" src="https://github.com/user-attachments/assets/8e51c0a6-a699-47e2-8b52-a8ad6299ec5c" />
 
 ## Setup to run this project:-
 
